@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mars Rover</title>
+    <link rel="icon" type="image/x-icon" href="/imgs/favicon.ico">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+        integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <div class="container ">
+        <div class="start-screen">
+            <form class='map-builder'>
+                <input class='scale-input' type="number" min='4' max='10' placeholder='Choose scale size' required>
+                <button type="submit">Build</button>
+            </form>
+        </div>
+
+        <div class="game-screen hidden">
+            <div class='playground'></div>
+            <img class='rover-image' src="./imgs/rover.png" alt="" style='display: none;'>
+            <form class='game-form'>
+                <input class='command-input' type="text" placeholder='Write your command here' >
+                <span class='note'>For Example: FFRFFLB</span>
+                <div class='controls'>
+                    <button class='execute-button' type="submit"><i class="fa-solid fa-rocket"></i></button>
+                    <button class='respawn-button'><i class="fa-solid fa-rotate-left"></i></button>
+                </div>
+                <div class='status'></div>
+            </form>
+            <span class='exit-button'><i class="fa-solid fa-right-from-bracket"></i></span>
+        </div>
+    </div>
+    <script type="module" src="/script.js"></script>
+</body>
+</html>
