@@ -1,5 +1,5 @@
 # Mars Rover
-Simple web app allows you to control a rover on a grid-based map. The rover can move forward, backward, rotate left, and rotate right based on the string commands you provide.
+Simple web app allows you to control a rover on a grid-based map. The rover can move forward, backward, rotate left, and rotate right based on the string commands you provide, try it [here](https://mohmoussad.github.io/Mars-Rover/)
 
 ## Getting Started
 
