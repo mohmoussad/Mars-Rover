@@ -9,6 +9,7 @@ const scaleSizeInput = document.querySelector(".scale-input");
 const executeBtn = document.querySelector(".execute-button");
 const exitBtn = document.querySelector(".exit-button");
 const respawnBtn = document.querySelector(".respawn-button");
+const obstaclesContainer = document.querySelector(".obstacles-container");
 
 // Constants objects to mitigate using a lot of IF/CASE conditions.
 const constants = {
@@ -30,6 +31,7 @@ const constants = {
 // Initial Rover and Map objects, they will be the source of the truth after any event
 const map = {
   scaleSize: 0,
+  obstaclesNumber: 4,
 };
 const rover = {
   xLocation: 0,
@@ -39,12 +41,12 @@ const rover = {
   yLocationVritual: 0,
   direction: "N",
   angle: 0,
+  status: "⚪",
 };
-
+let obstaclesArr = [];
 
 // The Map is constructued using grid depending on the scale size (user input)
 const buildMap = () => {
-
   const { scaleSize } = map;
   playground.innerHTML = "";
 
@@ -95,26 +97,47 @@ const buildRover = () => {
     angle: randomAngle,
   });
 
-  locateRover(randomX, randomY, randomAngle);
-  printStatus();
+  locateItem(roverImage, randomX, randomY, randomAngle);
+  printStatus("moving");
 };
 
-// Rendering rover on its new location after any event
-// Rover's location is calculated dynamically based on the cell size, it's meant to be located in the center of the cell
-const locateRover = (x, y, angle) => {
+const buildObstacles = () => {
+  obstaclesArr = [];
+  obstaclesContainer.innerHTML = " ";
+
+  for (let i = 1; i <= map.obstaclesNumber; i++) {
+    const x = Math.floor(Math.random() * map.scaleSize);
+    const y = Math.floor(Math.random() * map.scaleSize);
+    obstaclesArr.push({ x, y });
+  }
+  obstaclesArr.forEach((obstacle) => {
+    const obstacleImage = document.createElement("img");
+    obstacleImage.className = "obstacle-image";
+    obstacleImage.id = `${obstacle.x}${obstacle.y}`;
+    obstacleImage.src = "./imgs/obstacle.png";
+    const cellHeight = document.querySelector(".cell").getBoundingClientRect().height;
+    obstacleImage.style.height = 0.8 * cellHeight + "px";
+    obstaclesContainer.appendChild(obstacleImage);
+    locateItem(obstacleImage, obstacle.x, obstacle.y);
+  });
+};
+
+// Rendering any item (rover or obstacle)
+// item's location is calculated dynamically based on the cell size, it's meant to be located in the center of the cell
+const locateItem = (item, x, y, angle) => {
   const cell = document.querySelector(`.cell-${x}-${y}`);
 
-  roverImage.style.top = String(cell.getBoundingClientRect().y + 0.5 * cell.getBoundingClientRect().height) + "px";
-  roverImage.style.left = String(cell.getBoundingClientRect().x + 0.5 * cell.getBoundingClientRect().width) + "px";
+  item.style.top = String(cell.getBoundingClientRect().y + 0.5 * cell.getBoundingClientRect().height) + "px";
+  item.style.left = String(cell.getBoundingClientRect().x + 0.5 * cell.getBoundingClientRect().width) + "px";
 
   if (angle != undefined) {
-    roverImage.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
+    item.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
   }
 };
 
-// Status window 
-const printStatus = () => {
-  statusContainer.innerHTML = `<span>X: ${rover.xLocation}, Y: ${rover.yLocation}, D: ${rover.direction}</span>`;
+// Status window
+const printStatus = (status) => {
+  statusContainer.innerHTML = `<span>${rover.status} X: ${rover.xLocation}, Y: ${rover.yLocation}, D: ${rover.direction}</span>`;
 };
 
 // Main rover functions
@@ -128,17 +151,31 @@ const move = (command) => {
 
   const movementDirection = constants.movementDirections[rover.direction];
 
-  rover[`${movementDirection}Location`] += movementAmount;
-  rover[`${movementDirection}LocationVritual`] += movementAmount;
+  const newRover = { ...rover };
+
+  newRover[`${movementDirection}Location`] += movementAmount;
+  newRover[`${movementDirection}LocationVritual`] += movementAmount;
 
   // Handling rover movement after reaching map's edge
-  ["yLocationVritual", "xLocationVritual"].forEach(virtualCoordinate => {
-      rover[virtualCoordinate] = rover[virtualCoordinate] > scaleSize - 1 ? 0 : rover[virtualCoordinate];
-      rover[virtualCoordinate] = rover[virtualCoordinate] < 0 ? scaleSize - 1 : rover[virtualCoordinate];
-  });  
+  ["yLocationVritual", "xLocationVritual"].forEach((virtualCoordinate) => {
+    newRover[virtualCoordinate] = newRover[virtualCoordinate] > scaleSize - 1 ? 0 : newRover[virtualCoordinate];
+    newRover[virtualCoordinate] = newRover[virtualCoordinate] < 0 ? scaleSize - 1 : newRover[virtualCoordinate];
+  });
 
-  locateRover(rover.xLocationVritual, rover.yLocationVritual);
-  printStatus();
+  if (
+    obstaclesArr
+      .map((i) => JSON.stringify(i))
+      .includes(JSON.stringify({ x: newRover.xLocationVritual, y: newRover.yLocationVritual }))
+  ) {
+    rover.status = "🔴";
+    printStatus("stopped");
+    return;
+  }
+
+  Object.assign(rover, newRover);
+  rover.status = "🟢";
+  locateItem(roverImage, rover.xLocationVritual, rover.yLocationVritual);
+  printStatus("moving");
 };
 const rotate = (command) => {
   let currentRoverDirIndex = constants.dirs.indexOf(rover.direction);
@@ -152,7 +189,8 @@ const rotate = (command) => {
 
   rover.angle += constants.rotationNumericalDirection[command] * 90;
   roverImage.style.transform = `translate(-50%,-50%) rotate(${rover.angle}deg)`;
-  printStatus();
+  rover.status = "🟢";
+  printStatus("moving");
 };
 const respawn = () => {
   Object.assign(rover, {
@@ -164,8 +202,9 @@ const respawn = () => {
     angle: 0,
   });
 
-  locateRover(0, 0, 0);
-  printStatus();
+  locateItem(roverImage, 0, 0, 0);
+  rover.status = "⚪";
+  printStatus("moving");
 
   commandInput.value = "";
 };
@@ -187,6 +226,7 @@ mapBuilderForm.addEventListener("submit", (e) => {
 
   buildMap();
   buildRover();
+  buildObstacles();
 });
 
 exitBtn.addEventListener("click", (e) => {
@@ -212,7 +252,6 @@ executeBtn.addEventListener("click", (e) => {
         default:
           break;
       }
-      printStatus();
     }, i * 300);
   });
 
@@ -232,5 +271,9 @@ respawnBtn.addEventListener("click", (e) => {
 });
 
 window.addEventListener("resize", (e) => {
-  locateRover(rover.xLocationVritual, rover.yLocationVritual);
+  locateItem(roverImage, rover.xLocationVritual, rover.yLocationVritual);
+  obstaclesArr.forEach((obstacle) => {
+    const obstacleImage = document.getElementById(`${obstacle.x}${obstacle.y}`);
+    locateItem(obstacleImage, obstacle.x, obstacle.y);
+  });
 });
